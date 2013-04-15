@@ -6,7 +6,9 @@ import bisect
 from itertools import groupby
 
 version = [0,1,0] # 0.1.0
+
 def check_version(v,who="a plugin"):
+  """Call it with required version number to print error message if needed"""
   global version
   if v > version:
     msg = "vimbufsync: current version is %s but %s requires version %s (installed in \"%s\"). Please update."
@@ -15,7 +17,8 @@ def check_version(v,who="a plugin"):
 changes_pattern = re.compile('(>)?\s*(\d+)\s*(\d+)\s*(\d+)\s*(.*)$')
 
 def changes_of_buffer(nr):
-  # extract result of "changes" command on specified buffer
+  """extract result of "changes" command on a specific buffer
+     or None for deleted buffers"""
   cmd = "let selnr = %d\n%s" % (nr,
 "let curnr = bufnr('%')\n\
 redir => changes_string\n\
@@ -35,6 +38,8 @@ def extract_change(match):
   return (int(match.group(3)),int(match.group(4)),match.group(5))
 
 def extract_changes(nr):
+  """Returns structured representation of buffer changes,
+     or None if buffer deleted or not modified"""
   global changes_pattern
   # compute changes as a list of match objects
   changes = changes_of_buffer(nr)
@@ -53,6 +58,8 @@ def extract_changes(nr):
   return dict((k, len(list(v))) for k,v in groupby(sorted(map(extract_change,changes))))
 
 class BufferRevision:
+  """A BufferRevision tracks changed lines starting from a particular
+     version of the buffer contents."""
   def __init__(self, nr, rev):
     self._nr = nr
     self._rev = rev
@@ -60,18 +67,26 @@ class BufferRevision:
     self._last_rev  = -1
 
   def buf(self):
+    """Access to the ShadowBuffer object, or None if the buffer has
+       been deleted"""
     return sync_buffer(self._nr)
 
   def bufnr(self):
+    """Number of the buffer (unique accross a complete vim session)"""
     return self._nr
 
   def line(self):
+    """Index of the first line that differs between revision and current
+       contents. This can only decrease over time, when 0 is reached, the
+       buffer is completely different""" 
     buf = self.buf()
     if buf and self._last_rev != buf._revision() and self._last_line > 0:
       (self._last_line,self._last_rev) = buf._validate_revision(self._rev)
     return self._last_line
 
 class ShadowBuffer:
+  """Maintains state and provides heuristics needed to quickly find what
+     changed in a buffer"""
   def __init__(self,nr):
     self._nr = nr
     self._rev = 0
@@ -84,6 +99,10 @@ class ShadowBuffer:
     self._revisions_num  = []
     self._revobj = None
     self._changes = None
+
+  def bufnr(self):
+    """Number of the buffer (unique accross a complete vim session)"""
+    return self._nr
 
   def _find_changes(self):
     previous = self._changes
@@ -111,6 +130,8 @@ class ShadowBuffer:
     return self._rev
 
   def revision(self):
+    """Returns last synced revision as a BufferRevision object, buffer
+       contents may have changed since then"""
     if not (self._revobj and self.revobj._rev == self._rev):
       self._revobj = BufferRevision(self._nr, self._rev)
     return self._revobj
@@ -136,6 +157,8 @@ class ShadowBuffer:
       return (0,self._rev)
 
   def sync(self):
+    """Synchronize with buffer if needed and return a BufferRevision object
+       guaranteed to match current contents"""
     try:
       buf = vim.buffers[self._nr]
     except IndexError:
@@ -170,25 +193,60 @@ class ShadowBuffer:
     return self.revision()
 
 shadow_buffers = dict()
+deletion_listeners = set()
+
+class DeletionListener:
+  """Subclass to stay informed of deleted buffers"""
+  def deleted(self,buf,nr):
+    pass
+
+  def register(self):
+    global deletion_listeners
+    deletion_listeners.add(self)
+
+  def unregister(self):
+    global deletion_listeners
+    deletion_listeners.remove(self)
+
+class LambdaDeletionListener(DeletionListener):
+  def __init__(self,fun):
+    self.fun = fun
+
+  def deleted(self,buf,nr):
+    self.fun(buf,nr)
+
+def garbage_collect():
+  """Garbage collect deleted buffers"""
+  global shadow_buffers, deletion_listeners
+  for nr in shadow_buffers:
+    try:
+      vim.buffers[nr]
+    except IndexError:
+      buf = shadow_buffers[nr] 
+      del shadow_buffers[nr]
+      for l in deletion_listeners:
+        try:
+          l.deleted(buf,nr) 
+        except:
+          pass
 
 def sync_buffer(nr):
+  """Access ShadowBuffer associated with a buffer number. Don't use directly,
+     prefers sync()"""
   global shadow_buffers
   try:
     buf = vim.buffers[nr]
     if not (nr in shadow_buffers):
-      # Garbage collect deleted buffers
-      for nr in shadow_buffers:
-        try:
-          vim.buffers[nr]
-        except IndexError:
-          del shadow_buffers[nr]
+      garbage_collect()
       shadow_buffers[nr] = ShadowBuffer(nr)
     return shadow_buffers[nr]
   except IndexError:
-    if nr in shadow_buffers: del shadow_buffers[nr]
+    if nr in shadow_buffers: garbage_collect()
     return None
 
 def sync(nr=None):
+  """Returns a BufferRevision synchronized with the buffer numbered nr,
+     current buffer if none specified, or None if buffer got deleted"""
   if not nr:
     nr = vim.current.buffer.number
   buf = sync_buffer(nr)
