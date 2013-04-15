@@ -5,6 +5,13 @@ import sys
 import bisect
 from itertools import groupby
 
+version = [0,1,0] # 0.1.0
+def check_version(v,who="a plugin"):
+  global version
+  if v > version:
+    msg = "vimbufsync: current version is %s but %s requires version %s (installed in \"%s\"). Please update."
+    sys.stderr.write(msg % (".".join(map(str,version)), who, ".".join(map(str,v)), os.path.abspath(__file__)))
+
 changes_pattern = re.compile('(>)?\s*(\d+)\s*(\d+)\s*(\d+)\s*(.*)$')
 
 def changes_of_buffer(nr):
