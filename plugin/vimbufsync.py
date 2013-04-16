@@ -235,7 +235,6 @@ def sync_buffer(nr):
      prefers sync()"""
   global shadow_buffers
   try:
-    buf = vim.buffers[nr]
     if not (nr in shadow_buffers):
       garbage_collect()
       shadow_buffers[nr] = ShadowBuffer(nr)
