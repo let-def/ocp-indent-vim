@@ -132,7 +132,7 @@ class ShadowBuffer:
   def revision(self):
     """Returns last synced revision as a BufferRevision object, buffer
        contents may have changed since then"""
-    if not (self._revobj and self.revobj._rev == self._rev):
+    if not (self._revobj and self._revobj._rev == self._rev):
       self._revobj = BufferRevision(self._nr, self._rev)
     return self._revobj
 
