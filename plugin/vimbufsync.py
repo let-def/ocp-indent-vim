@@ -63,8 +63,8 @@ class BufferRevision:
   def __init__(self, buf, rev):
     self._buf = buf
     self._rev = rev
-    self._last_line = -1
-    self._last_rev  = -1
+    self._last_line = len(buf)
+    self._last_rev  = rev
 
   def buf(self):
     """Access to the ShadowBuffer object, or None if the buffer has
