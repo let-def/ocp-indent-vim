@@ -40,7 +40,7 @@ def ocp_indent(content,state=None,lines=None):
     lines = "0-0"
   if not state:
     state = ""
-  content = "\n".join([state] + content)
+  content = "\n".join([state] + content + [""])
   process = subprocess.Popen(
       [ocp_indent_path,"--lines",lines,"--numeric","--rest"],
       stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -74,7 +74,7 @@ def ocpindentline(l):
   else:
     l0, state = 0, ""
   if l - l0 > 10:
-    content = list(vim.current.buffer[l0:l-4])
+    content = vim.current.buffer[l0:l-4]
     (state, _) = ocp_indent(content,state)
     l0 = l-4
     saved_states.append((l0,state))
