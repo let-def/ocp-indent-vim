@@ -63,7 +63,7 @@ class BufferRevision:
   def __init__(self, buf, rev):
     self._buf = buf
     self._rev = rev
-    self._last_line = len(buf)
+    self._last_line = len(buf)+1
     self._last_rev  = rev
 
   def buf(self):
@@ -77,10 +77,10 @@ class BufferRevision:
 
   def line(self):
     """Index of the first line that differs between revision and current
-       contents. This can only decrease over time, when 0 is reached, the
+       contents. This can only decrease over time, when 1 is reached, the
        buffer is completely different""" 
     buf = self.buf()
-    if buf and self._last_rev != buf._revision() and self._last_line > 0:
+    if buf and self._last_rev != buf._revision() and self._last_line > 1:
       (self._last_line,self._last_rev) = buf._validate_revision(self._rev)
     return self._last_line
 
