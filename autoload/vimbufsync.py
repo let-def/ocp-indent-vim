@@ -120,7 +120,7 @@ class ShadowBuffer:
   def _find_changed_line(self):
     changes = self._find_changes()
     if changes == None:
-      return 0
+      return 1
     lines = set(lin for lin,col,txt in changes) 
     if lines:
       return min(lines)
@@ -154,7 +154,7 @@ class ShadowBuffer:
     if index:
       return (self._revisions_line[index],self._rev)
     else:
-      return (0,self._rev)
+      return (1,self._rev)
 
   def sync(self):
     """Synchronize with buffer if needed and return a BufferRevision object
