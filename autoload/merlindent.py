@@ -42,13 +42,15 @@ def ocp_indent(content,state=None,lines=None):
     state = ""
   content = "\n".join([state] + content + [""])
   process = subprocess.Popen(
-      [ocp_indent_path,"--lines",lines,"--numeric","--rest"],
+      [ocp_indent_path,"--lines",lines,"--numeric","--marshal-state"],
       stdin=subprocess.PIPE, stdout=subprocess.PIPE)
   process.stdin.write(content)
   process.stdin.close()
   answer = process.stdout.readlines()
   state = answer.pop()
-  return (state,answer)
+  print state
+  [line,col] = map(int,state.split(",")[:2])
+  return ((line-1,col-1,state),answer)
 
 ########################################
 # Start from here to tweak indentation #
@@ -64,23 +66,23 @@ def ocpindentline(l):
   if l <= 2:
     saved_states = []
   else:
-    i = bisect.bisect_left(saved_states, (l,""))
+    i = bisect.bisect_left(saved_states, (l,0,""))
     if i != len(saved_states):
       saved_states = saved_states[:i]
 
   # Get or generate state to resume from
   if saved_states:
-    l0, state = saved_states[-1]
+    l0, c0, state = saved_states[-1]
   else:
-    l0, state = 0, ""
+    l0, c0, state = 0, 0, None
   if l - l0 > 10:
     content = vim.current.buffer[l0:l-4]
-    (state, _) = ocp_indent(content,state)
-    l0 = l-4
-    saved_states.append((l0,state))
+    ((l0,c0,state), _) = ocp_indent(content,state)
+    saved_states.append((l0,c0,state))
 
   # Indent
   content = list(vim.current.buffer[l0:l])
+  content[0] = content[0][c0:]
   if emptyline(content[-1]):
     content[-1] = "X"
 
