@@ -29,6 +29,7 @@ version = [0,1,0] # 0.1.0
 def check_version(v,who="a plugin"):
   """Call it with required version number to print error message if needed"""
   global version
+  if isinstance(v,str): v = map(int,v.split("."))
   if v > version:
     msg = "vimbufsync: current version is %s but %s requires version %s (installed in \"%s\"). Please update."
     sys.stderr.write(msg % (".".join(map(str,version)), who, ".".join(map(str,v)), os.path.abspath(__file__)))
