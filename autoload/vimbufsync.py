@@ -181,7 +181,8 @@ class ShadowBuffer:
        guaranteed to match current contents"""
     line = self._find_changed_line()
     if line:
-      line = min(line,len(self._shadow),len(self._buf))
+      line_max = min(len(self._shadow),len(self._buf)) - 1
+      line = min(line,line_max + 1)
       # heuristic: find 3 equal non-blank lines in a row
       in_a_row = 0
       line_count = 0
@@ -194,7 +195,12 @@ class ShadowBuffer:
         else:
           in_a_row = 0
           line_count = 0
-      line += 1 + line_count
+      line += line_count
+      # increment line while unchanged
+      while line < line_max and self._shadow[line] == self._buf[line]:
+        line += 1
+      # Switch back to 1-indexed array
+      line += 1
       # update shadow buffer
       if line < 1:
         self._shadow[:] = self._buf[:]
