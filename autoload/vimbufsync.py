@@ -22,7 +22,7 @@ import re
 import os
 import sys
 import bisect
-from itertools import groupby
+from itertools import groupby, izip
 
 version = [0,1,0] # 0.1.0
 
@@ -83,8 +83,8 @@ class BufferRevision:
   def __init__(self, buf, rev):
     self._buf = buf
     self._rev = rev
-    self._last_line = len(buf)+1
-    self._last_rev  = rev
+    self._last_pos = (len(buf)+1,0)
+    self._last_rev = rev
 
   def buf(self):
     """Access to the ShadowBuffer object, or None if the buffer has
@@ -95,14 +95,25 @@ class BufferRevision:
     """Number of the buffer (unique accross a complete vim session)"""
     return self._buf.number
 
+  def pos(self):
+    """Position of the first character that differs between revision and 
+       current contents. This can only decrease over time, when (1,1) is
+       reached, the buffer is completely different""" 
+    buf = self.buf()
+    if buf and self._last_rev != buf._revision() and self._last_pos > (1,1):
+      (self._last_pos,self._last_rev) = buf._validate_revision(self._rev)
+    return self._last_pos
+
   def line(self):
     """Index of the first line that differs between revision and current
        contents. This can only decrease over time, when 1 is reached, the
        buffer is completely different""" 
-    buf = self.buf()
-    if buf and self._last_rev != buf._revision() and self._last_line > 1:
-      (self._last_line,self._last_rev) = buf._validate_revision(self._rev)
-    return self._last_line
+    return self.pos()[0]
+
+  def col(self):
+    """Index of the first column that differs between revision and current
+       contents in first changed line."""
+    return self.pos()[1]
 
 class ShadowBuffer:
   """Maintains state and provides heuristics needed to quickly find what
@@ -115,7 +126,7 @@ class ShadowBuffer:
   def clear(self):
     self._rev += 1
     self._shadow = []
-    self._revisions_line = []
+    self._revisions_pos = []
     self._revisions_num  = []
     self._revobj = None
     self._changes = None
@@ -156,25 +167,25 @@ class ShadowBuffer:
       self._revobj = BufferRevision(self._buf, self._rev)
     return self._revobj
 
-  def _invalidate_lines(self,line):
+  def _invalidate_lines(self,line,col):
     self._rev += 1
 
-    last = bisect.bisect_left(self._revisions_line, line)
+    last = bisect.bisect_left(self._revisions_pos, (line,col))
     if last:
-      self._revisions_line = self._revisions_line[:last]
-      self._revisions_num  = self._revisions_num[:last]
+      self._revisions_pos = self._revisions_pos[:last]
+      self._revisions_num = self._revisions_num[:last]
     else:
-      self._revisions_line = []
-      self._revisions_num  = []    
-    self._revisions_line.append(line)
+      self._revisions_pos = []
+      self._revisions_num = []    
+    self._revisions_pos.append((line,col))
     self._revisions_num.append(self._rev)
 
   def _validate_revision(self,rev):
     index = bisect.bisect_right(self._revisions_num, rev)
     if index:
-      return (self._revisions_line[index],self._rev)
+      return (self._revisions_pos[index],self._rev)
     else:
-      return (1,self._rev)
+      return ((1,1),self._rev)
 
   def sync(self):
     """Synchronize with buffer if needed and return a BufferRevision object
@@ -206,8 +217,17 @@ class ShadowBuffer:
         self._shadow[:] = self._buf[:]
       else:
         self._shadow[line-1:] = self._buf[line-1:]
+
       # new revision
-      self._invalidate_lines(line)
+      if line in self._shadow and line in self._buf:
+        s1 = self._shadow[line]
+        s2 = self._buf[line]
+        col = [i for i,(a1,a2)  in enumerate(izip(s1,s2)) if a1!=a2]
+        if col: col = col[0]+1
+        else:   col = min(len(s1),len(s2))+1
+      else:
+        col = 1
+      self._invalidate_lines(line,col)
     return self.revision()
 
 shadow_buffers = dict()
