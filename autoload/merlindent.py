@@ -48,9 +48,8 @@ def ocp_indent(content,state=None,lines=None):
   process.stdin.close()
   answer = process.stdout.readlines()
   state = answer.pop()
-  print state
   [line,col] = map(int,state.split(",")[:2])
-  return ((line-1,col-1,state),answer)
+  return ((line-1,col,state),answer)
 
 ########################################
 # Start from here to tweak indentation #
