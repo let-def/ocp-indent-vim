@@ -2,3 +2,7 @@ Use with ocp-indent >= 1.2.0
 
 Just add this directory to your runtime path.
 E.g: set rtp+=</path/to/ocp-indent-vim>
+
+Released under MIT License.
+Includes "vimbufsync" code licensed under WTFPL, see:
+  https://github.com/def-lkb/vimbufsync 
