@@ -5,7 +5,7 @@ import subprocess
 import bisect
 
 import vimbufsync
-vimbufsync.check_version("0.1.0", who="merlindent")
+vimbufsync.check_version("0.1.0", who="ocp-indent-vim")
 
 inline_process = None
 saved_states = []

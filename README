@@ -1,1 +1,2 @@
-Add this to your runtime path.
+Just add this directory to your runtime path.
+E.g: set rtp+=</path/to/ocp-indent-vim>

@@ -4,12 +4,16 @@ py if not vim.eval("s:current_dir") in sys.path:
 \    sys.path.append(vim.eval("s:current_dir"))
 
 call vimbufsync#init()
-py import merlindent
+py import ocpindent
 
-function! merlindent#init()
+function! ocpindent#init()
 endfunction
 
-function! merlindent#OcpIndentLine()
-  py vim.command("let l:ret = %d" % merlindent.vim_indentline())
+function! ocpindent#OcpIndentLine()
+  py vim.command("let l:ret = %d" % ocpindent.vim_indentline())
   return l:ret
+endfunction
+
+function! ocpindent#Equal()
+  py ocpindent.vim_equal()
 endfunction
