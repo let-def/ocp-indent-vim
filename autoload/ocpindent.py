@@ -97,3 +97,9 @@ def vim_sync():
 def vim_indentline():
   return ocpindentline(int(vim.eval("v:lnum")))
 
+def vim_equal():
+  r = vim.current.range
+  w = vim.current.window
+  pos = w.cursor
+  vim.command("0,'>!%s --lines %d-" % (ocp_indent_path, r.start+1))
+  w.cursor = pos
