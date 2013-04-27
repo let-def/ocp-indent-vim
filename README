@@ -1,4 +1,5 @@
-Use with ocp-indent >= 1.2.0
+Not ready for use.
+Use with ocp-indent >= 1.2.0.
 
 Just add this directory to your runtime path.
 E.g: set rtp+=</path/to/ocp-indent-vim>
