@@ -12,6 +12,10 @@ saved_states = []
 saved_sync = None
 ocp_indent_path = "ocp-indent"
 
+insert_mode = False
+equal_line = None
+equal_lines = []
+
 def sync():
   global saved_sync, saved_states
   curr_sync = vimbufsync.sync()
@@ -23,7 +27,6 @@ def sync():
     if i != len(saved_states):
       saved_states = saved_states[:i]
   saved_sync = curr_sync
-
 
 #########################################################
 # Process management, not really related to indentation #
@@ -58,9 +61,8 @@ def ocp_indent(content,state=None,lines=None):
 def emptyline(s):
   return s == "" or s.isspace()
 
-def ocpindentline(l):
+def ocpindentline(l,count=1):
   global saved_states
-
   # Drop invalid states
   if l <= 2:
     saved_states = []
@@ -80,22 +82,54 @@ def ocpindentline(l):
     saved_states.append((l0,c0,state))
 
   # Indent
-  content = list(vim.current.buffer[l0:l])
+  content = list(vim.current.buffer[l0:l+count-1])
   content[0] = content[0][c0:]
-  if emptyline(content[-1]):
+  if count == 1 and emptyline(content[-1]):
     content[-1] = "X"
 
-  _, content = ocp_indent(content,state,lines=l)
-  if len(content):
-    return int(content[-1])
+  if count == 1:
+    _, content = ocp_indent(content,state,lines=l)
+    if len(content):
+      return int(content[-1])
+    else:
+      return -1
   else:
-    return -1
+    _, content = ocp_indent(content,state,lines=(l,l+count-1))
+    if len(content):
+      return list(map(int,content))
+    else:
+      return None
 
-def vim_sync():
+def vim_insertenter():
+  global insert_mode, equal_line, equal_lines
+  equal_line = None
+  equal_lines = []
+  insert_mode = True
+  sync()
+
+def vim_insertleave():
+  global insert_mode
+  insert_mode = False
   sync()
 
 def vim_indentline():
-  return ocpindentline(int(vim.eval("v:lnum")))
+  global insert_mode, equal_line, equal_lines
+  line = int(vim.eval("v:lnum"))
+  if insert_mode or equal_line != line:
+    equal_line = line + 1
+    equal_lines = []
+    return ocpindentline(line)
+  else:
+    if equal_line != line or not equal_lines:
+      sync()
+      equal_lines = ocpindentline(line,count=40)
+      if equal_lines: equal_lines.reverse()
+
+    if equal_lines:
+      equal_line = line + 1
+      return equal_lines.pop()
+    else:
+      return -1
 
 def vim_equal():
   r = vim.current.range
