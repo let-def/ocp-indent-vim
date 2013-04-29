@@ -65,7 +65,7 @@ def ocpindentline(l):
   if l <= 2:
     saved_states = []
   else:
-    i = bisect.bisect_left(saved_states, (l,0,""))
+    i = bisect.bisect_left(saved_states, (l-1,0,""))
     if i != len(saved_states):
       saved_states = saved_states[:i]
 
