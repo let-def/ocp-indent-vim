@@ -14,6 +14,7 @@ ocp_indent_path = "ocp-indent"
 
 insert_mode = False
 equal_line = None
+equal_consecutive = 0
 equal_lines = []
 
 def sync():
@@ -113,16 +114,18 @@ def vim_insertleave():
   sync()
 
 def vim_indentline():
-  global insert_mode, equal_line, equal_lines
+  global insert_mode, equal_line, equal_lines, equal_consecutive
   line = int(vim.eval("v:lnum"))
-  if insert_mode or equal_line != line:
+  if insert_mode or (equal_line != line and equal_consecutive < 5):
+    if equal_line != line: equal_consecutive = 0
+    else: equal_consecutive += 1
     equal_line = line + 1
     equal_lines = []
     return ocpindentline(line)
   else:
     if equal_line != line or not equal_lines:
       sync()
-      equal_lines = ocpindentline(line,count=40)
+      equal_lines = ocpindentline(line,count=500)
       if equal_lines: equal_lines.reverse()
 
     if equal_lines:
