@@ -1,9 +1,14 @@
 import os
 import sys
 import vim
+import time
 import subprocess
 
 ocp_indent_path = "ocp-indent"
+ocp_lastline = None
+ocp_lasttime = None
+ocp_linefst = 0
+ocp_linebuf = []
 
 def ocp_indent(lines):
   if lines:
@@ -19,13 +24,25 @@ def ocp_indent(lines):
       stdin=subprocess.PIPE, stdout=subprocess.PIPE)
   process.stdin.write(content)
   process.stdin.close()
-  answer = process.stdout.readlines()
-  state = answer.pop()
-  return int(state)
+  return map(int,process.stdout.readlines())
 
 def vim_indentline():
+  global ocp_lastline, ocp_lasttime, ocp_linefst, ocp_linebuf
   line = int(vim.eval("v:lnum"))
-  return ocp_indent(line)
+  if ocp_lastline == line - 1 and abs(time.time() - ocp_lasttime) < 0.1:
+    # Possibly a selection indentation
+    if not (line >= ocp_linefst and line < ocp_linefst + len(ocp_linebuf)):
+      ocp_linefst = line
+      ocp_linebuf = ocp_indent((line, min(line + 200, len(vim.current.buffer))))
+    indent = ocp_linebuf[line - ocp_linefst]
+  else:
+    # Current line indentation
+    ocp_linebuf = []
+    indent = ocp_indent(line)
+    indent = indent.pop()
+  ocp_lasttime = time.time()
+  ocp_lastline = line
+  return indent
 
 def vim_equal():
   r = vim.current.range
