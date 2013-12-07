@@ -35,7 +35,9 @@ def vim_indentline():
     if ocp_inarow > 2:
       if not (line >= ocp_linefst and line < ocp_linefst + len(ocp_linebuf)):
         ocp_linefst = line
-        ocp_linebuf = ocp_indent((line, min(line + 200, len(vim.current.buffer))))
+        ocp_linebuf = ocp_indent((line, min(line + 1000, len(vim.current.buffer))))
+      ocp_lasttime = time.time()
+      ocp_lastline = line
       return ocp_linebuf[line - ocp_linefst]
     else:
       # Increment counter
