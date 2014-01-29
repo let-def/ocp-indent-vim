@@ -27,10 +27,19 @@ def ocp_indent(lines):
   process.stdin.close()
   return map(int,process.stdout.readlines())
 
+def vim_contiguous(line1, line2):
+  if not line1 or not line2: return False
+  if line2 == line1 - 1: return True
+  if line1 >= line2: return False
+  if "".join(vim.current.buffer[line1+1:line2-1]).strip() == "": return True
+  return False
+
 def vim_indentline():
   global ocp_lastline, ocp_lasttime, ocp_linefst, ocp_linebuf, ocp_inarow
   line = int(vim.eval("v:lnum"))
-  if ocp_lastline == line - 1 and abs(time.time() - ocp_lasttime) < 0.1:
+  with open("/home/def/test.txt", "a") as myfile:
+    myfile.write("line %d\n" % line)
+  if vim_contiguous(ocp_lastline,line) and abs(time.time() - ocp_lasttime) < 0.1:
     # Possibly a selection indentation, use a threshold to detect consecutive calls
     if ocp_inarow > 2:
       if not (line >= ocp_linefst and line < ocp_linefst + len(ocp_linebuf)):
