@@ -22,7 +22,7 @@ def ocp_indent(lines):
   content = "\n".join(vim.current.buffer[:end] + ["X"])
   process = subprocess.Popen(
       [ocp_indent_path,"--lines",lines,"--numeric"],
-      stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+      stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=open(os.devnull,"w"))
   process.stdin.write(content)
   process.stdin.close()
   return map(int,process.stdout.readlines())
