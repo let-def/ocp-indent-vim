@@ -37,8 +37,6 @@ def vim_contiguous(line1, line2):
 def vim_indentline():
   global ocp_lastline, ocp_lasttime, ocp_linefst, ocp_linebuf, ocp_inarow
   line = int(vim.eval("v:lnum"))
-  with open("/home/def/test.txt", "a") as myfile:
-    myfile.write("line %d\n" % line)
   if vim_contiguous(ocp_lastline,line) and abs(time.time() - ocp_lasttime) < 0.1:
     # Possibly a selection indentation, use a threshold to detect consecutive calls
     if ocp_inarow > 2:
