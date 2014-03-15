@@ -20,8 +20,11 @@ def ocp_indent(lines):
       end = lines[1]
       lines = "%d-%d" % lines
   content = "\n".join(vim.current.buffer[:end] + ["X"])
+  args = vim.eval("exists('b:ocp_indent_args') ? b:ocp_indent_args : exists ('g:ocp_indent_args') ? g:ocp_indent_args : []")
+  if type(args) != list:
+      args = [args]
   process = subprocess.Popen(
-      [ocp_indent_path,"--lines",lines,"--numeric"],
+      [ocp_indent_path] + args + ["--lines",lines,"--numeric"],
       stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=open(os.devnull,"w"))
   process.stdin.write(content)
   process.stdin.close()
