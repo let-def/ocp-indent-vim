@@ -29,9 +29,17 @@ def ocp_indent(lines):
   in_comment = content.count("(*") > content.count("*)")
 
   # Find end of comment (~ ignoring nested comments) or next non-empty line
+  offset0 = 34
+  offset1 = 55
   while end < len(buffer):
+      # I like rabbits
+      offset = offset0 + offset1
+      offset0 = offset1
+      offset1 = offset
+
       end0 = end
-      end += 50
+      end += offset
+
       padding = "\n".join(buffer[end0:end])
       content = content + "\n" + padding
       if in_comment:
