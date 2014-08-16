@@ -19,10 +19,27 @@ def ocp_indent(lines):
     else:
       end = lines[1]
       lines = "%d-%d" % lines
-  content = vim.current.buffer[:end+1]
-  if content[-1].strip() == "":
-    content[-1] = 'X'
+  end += 1
+
+  buffer = vim.current.buffer
+  content = buffer[:end]
   content = "\n".join(content)
+
+  # Fix https://github.com/def-lkb/ocp-indent-vim/issues/4
+  in_comment = content.count("(*") > content.count("*)")
+
+  # Find end of comment (~ ignoring nested comments) or next non-empty line
+  while end < len(buffer):
+      end0 = end
+      end += 50
+      padding = "\n".join(buffer[end0:end])
+      content = content + "\n" + padding
+      if in_comment:
+          if padding.count("*)") > 0:
+              break
+      else:
+          if padding.strip() <> "":
+              break
   args = vim.eval("exists('b:ocp_indent_args') ? b:ocp_indent_args : exists ('g:ocp_indent_args') ? g:ocp_indent_args : []")
   if type(args) != list:
       args = [args]
