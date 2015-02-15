@@ -1,4 +1,4 @@
-if exists("b:did_indent")
+if exists("b:did_indent") || index(['mll','mly'], expand('%:e')) >= 0
  finish
 endif
 let b:did_indent = 1
