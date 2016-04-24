@@ -46,7 +46,7 @@ def ocp_indent(lines):
           if padding.count("*)") > 0:
               break
       else:
-          if padding.strip() <> "":
+          if padding.strip() != "":
               break
   args = vim.eval("exists('b:ocp_indent_args') ? b:ocp_indent_args : exists ('g:ocp_indent_args') ? g:ocp_indent_args : []")
   if type(args) != list:
