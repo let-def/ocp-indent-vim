@@ -54,9 +54,9 @@ def ocp_indent(lines):
   process = subprocess.Popen(
       [ocp_indent_path] + args + ["--lines",lines,"--numeric"],
       stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=open(os.devnull,"w"))
-  process.stdin.write(content)
+  process.stdin.write(content.encode())
   process.stdin.close()
-  return map(int,process.stdout.readlines())
+  return [int(line) for line in process.stdout.readlines()]
 
 def vim_contiguous(line1, line2):
   if not line1 or not line2: return False
