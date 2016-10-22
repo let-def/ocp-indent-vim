@@ -53,10 +53,11 @@ def ocp_indent(lines):
       args = [args]
   process = subprocess.Popen(
       [ocp_indent_path] + args + ["--lines",lines,"--numeric"],
-      stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=open(os.devnull,"w"))
-  process.stdin.write(content.encode())
-  process.stdin.close()
-  return [int(line) for line in process.stdout.readlines()]
+      stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+      universal_newlines=True,
+      stderr=open(os.devnull,"w"))
+  out, _ = process.communicate(input=content)
+  return [int(line) for line in out.splitlines()]
 
 def vim_contiguous(line1, line2):
   if not line1 or not line2: return False
