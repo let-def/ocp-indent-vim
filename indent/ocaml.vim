@@ -1,7 +1,10 @@
-if exists("b:did_indent") || index(['mll','mly'], expand('%:e')) >= 0
+if exists("b:did_indent") || expand('%:e') == 'mly'
  finish
 endif
 let b:did_indent = 1
+if expand('%:e') == 'mll'
+  let b:ocp_indent_args="--syntax=mll"
+endif
 
 call ocpindent#init()
 
